@@ -3,12 +3,12 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any, Generic, TypeVar
 
-if sys.version_info <= (3, 9):
+if sys.version_info < (3, 10):
     from typing_extensions import ParamSpec
 else:
     from typing import ParamSpec
 
-if sys.version_info <= (3, 13):
+if sys.version_info < (3, 13):
     from typing_extensions import TypeIs
 else:
     from typing import TypeIs
