@@ -6,17 +6,10 @@ cimport cython
 from cpython.dict cimport (
     PyDict_Contains,
     PyDict_Copy,
-    PyDict_GetItem,
-    PyDict_GetItemWithError,
     PyDict_SetItem
 )
-from cpython.object cimport PyObject, PyObject_Call
 from cpython.set cimport PySet_Contains
-from cpython.tuple cimport (
-    PyTuple_GET_ITEM,
-    PyTuple_GET_SIZE,
-    PyTuple_New
-)
+from cpython.tuple cimport PyTuple_GET_SIZE
 
 from . import abc
 from . import utils
@@ -41,13 +34,10 @@ cdef extern from "reduce_packer.h":
     )
 
 cdef extern from "Python.h":
-    object PyTuple_GetItemObj "PyTuple_GET_ITEM"(object p, Py_ssize_t pos) noexcept
-
-    void PyTuple_SetItemPtr "PyTuple_SET_ITEM"(object  p, Py_ssize_t pos, PyObject* val) noexcept
-    int PyDict_SetItemPtr "PyDict_SetItem"(object p, object key, PyObject* val) except -1
     Py_ssize_t PyDict_GET_SIZE(dict p)
 
 
+@cython.freelist(250)
 cdef class reduce:
     cdef:
         public object __wrapped__
@@ -84,6 +74,7 @@ cdef class reduce:
         self._nparams = len(self._params)
         self._required = required
 
+    @cython.nonecheck(False)
     def install(self, *args, **kwargs):
         r"""Simillar to `inspect.BoundArguments` but a little bit faster,
         it is based off CPython's getargs.c's algorythms, this will also attempt to
@@ -119,6 +110,7 @@ cdef class reduce:
 
         output = PyDict_Copy(self._defaults)
         for n in range(nargs):
+            # FIXME: Currently Cython still None Checks
             k = self._params[n]
             if PyDict_Contains(kwargs, k):
                 # arg present in tuple and dict
@@ -127,9 +119,12 @@ cdef class reduce:
                     self._name, k, n + 1
                     )
                 )
-            PyDict_SetItemPtr(output, k, PyTuple_GET_ITEM(args, n))
+            # XXX: Will let it take the heat for right now 
+            # until we can figure out how to make it stop segfaulting.
+            v = args[n]
+            PyDict_SetItem(output, k, v)
 
-
+        # TODO: This section could be moved to C in a later update...
         # replace rest of the defaults with keyword arguments
         for k, v in kwargs.items():
             # force up a keyerror if object is not present in the
