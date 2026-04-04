@@ -1,0 +1,2 @@
+-r bench.txt
+-r test.txt

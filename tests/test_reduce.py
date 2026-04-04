@@ -95,9 +95,8 @@ class BaseTestReduce:
         assert is_reducable(0xDEAD) is False
 
 
-class TestPyReduce(BaseTestReduce):
-    reduce = reduce_py
-
-
 class TestCReduce(BaseTestReduce):
     reduce = reduce_c
+
+class TestPyReduce(BaseTestReduce):
+    reduce = reduce_py
