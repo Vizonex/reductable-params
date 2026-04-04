@@ -1,4 +1,9 @@
 # reductable-params
+[![PyPI version](https://badge.fury.io/py/reductable-params.svg)](https://badge.fury.io/py/reductable-params)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/reductable-params)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![NO AI](https://raw.githubusercontent.com/nuxy/no-ai-badge/master/badge.svg)](https://github.com/nuxy/no-ai-badge)   
+
 A low level Function packer & sender inspired by pluggy that is designed for mass sending
 as well as ignoring unneeded parameters before sending to a function allowing for large chainable callbacks to be possible in any configuration order.
 
