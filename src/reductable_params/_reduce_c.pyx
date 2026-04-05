@@ -32,6 +32,13 @@ cdef extern from "reduce_packer.h":
         const Py_ssize_t n_required,
         const Py_ssize_t n_params
     )
+    # This one was a performance optimization 
+    # in dictionary iterations
+    int reduce_install_kwargs(
+        object params,
+        object kwargs,
+        object output
+    )
 
 cdef extern from "Python.h":
     Py_ssize_t PyDict_GET_SIZE(dict p)
@@ -124,15 +131,8 @@ cdef class reduce:
             v = args[n]
             PyDict_SetItem(output, k, v)
 
-        # TODO: This section could be moved to C in a later update...
-        # replace rest of the defaults with keyword arguments
-        for k, v in kwargs.items():
-            # force up a keyerror if object is not present in the
-            # actual defaults
-            if not PySet_Contains(params, k):
-                raise KeyError(k)
-            PyDict_SetItem(output, k, v)
-
+        if reduce_install_kwargs(params, kwargs, output) < 0:
+            raise 
         return output
 
     @cython.nonecheck(False)

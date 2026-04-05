@@ -7,6 +7,15 @@
 extern "C" {
 #endif
 
+// Backwards comptability
+#ifndef Py_BEGIN_CRITICAL_SECTION 
+    #define Py_BEGIN_CRITICAL_SECTION(self)
+#endif
+
+#ifndef Py_END_CRITICAL_SECTION
+    #define Py_END_CRITICAL_SECTION()
+#endif
+
 /* This was more or less an optimization & Not wanting cython 
 to screw around or trigger segfaults with in the most critical sections 
 The entire reduce module could be moved to C if problems persist.
@@ -26,6 +35,30 @@ void PyErr_SetKeyError(PyObject* arg){
     }
     PyErr_SetObject((PyObject*)Py_TYPE(exc), exc);
     Py_DECREF(exc);
+}
+
+static int reduce_install_kwargs(
+    PyObject* params,
+    PyObject* kwargs,
+    PyObject* output
+){
+    PyObject* key, *value;
+    Py_ssize_t pos = 0;
+
+    Py_BEGIN_CRITICAL_SECTION(kwargs);
+    while (PyDict_Next(kwargs, &pos, &key, &value)){
+        if (!PySet_Contains(params, key)){
+            /* force up a keyerror if object is not present 
+             * in the actual defaults */
+            PyErr_SetKeyError(key);
+            return -1;
+        }
+        if (PyDict_SetItem(output, key, value) < 0){
+            return -1;
+        }
+    }
+    Py_END_CRITICAL_SECTION();
+    return 0;
 }
 
 static PyObject* reduce_call(
