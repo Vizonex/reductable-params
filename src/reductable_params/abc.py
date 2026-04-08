@@ -31,6 +31,14 @@ class Reducable(Generic[P, T], ABC):
     @abstractmethod
     def __call__(self, /, kwds: dict[str, Any]) -> T: ...
 
+    @property
+    @abstractmethod
+    def args(self) -> tuple[str, ...]: ...
+
+    @property
+    @abstractmethod
+    def kwargs(self) -> tuple[str, ...]: ...
+
 
 def is_reducable(obj: object) -> TypeIs[Reducable]:
     """Used for inspecting to see if a type belongs to a `reduce`

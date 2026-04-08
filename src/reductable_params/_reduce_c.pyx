@@ -20,6 +20,11 @@ cdef varnames = utils.varnames
 del abc
 del utils
 
+# Macro-like object for controlling the heap-size 
+# of the number of reduce elements to use.
+# Throw an issue number should be bigger.
+DEF REDUCE_FREELIST_SIZE = 250
+
 cdef extern from "reduce_packer.h":
     # added incase of preformance degrades and to prevent cython
     # from playing around with or triggering segfaults.
@@ -44,7 +49,7 @@ cdef extern from "Python.h":
     Py_ssize_t PyDict_GET_SIZE(dict p)
 
 
-@cython.freelist(250)
+@cython.freelist(REDUCE_FREELIST_SIZE)
 cdef class reduce:
     cdef:
         public object __wrapped__
@@ -80,16 +85,37 @@ cdef class reduce:
         self._param_set = frozenset(self._params)
         self._nparams = len(self._params)
         self._required = required
+    
+    @property
+    def args(self):
+        """lists out the required arguments of this wrapped function."""
+        return self._required
+    
+    @args.setter
+    def args(self, value):
+        raise AttributeError("args property is read-only.")
+
+    @property
+    def kwargs(self):
+        """lists out optional arguments of this wrapped function."""
+        return self._optional
+
+    @kwargs.setter
+    def kwargs(self, value):
+        raise AttributeError("kwargs property is read-only.")
+
 
     @cython.nonecheck(False)
     def install(self, *args, **kwargs):
         r"""Simillar to `inspect.BoundArguments` but a little bit faster,
-        it is based off CPython's getargs.c's algorythms, this will also attempt to
-        install defaults if any are needed. However this does not allow arbitrary
-        arguments to be passed through. Instead, this should primarly be
-        used for writing callback utilities that require a parent function's signature.
+        it is based off CPython's getargs.c's algorythms, this will also
+        attempt to install defaults if any are needed. However this does not
+        allow arbitrary arguments to be passed through. Instead, this should
+        primarly be used for writing callback utilities that require a parent
+        function's signature.
 
-        :raises TypeError: if argument parsing fails or has a argument that overlaps in either args or kwargs.
+        :raises TypeError: if argument parsing fails or has a argument that
+            overlaps in either args or kwargs.
         """
         # Mimics checks from vgetargskeywordsfast_impl in getargs.c
         cdef Py_ssize_t nargs = PyTuple_GET_SIZE(args)

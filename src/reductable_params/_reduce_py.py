@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from types import GenericAlias
-from typing import Any, Generic
+from typing import Any, Generic, NoReturn
 
 from .abc import P, Reducable, T
 from .utils import varnames
@@ -47,12 +47,30 @@ class reduce(Generic[P, T]):
         self._params_set = frozenset(self._params)
         self._required = required
 
+    @property
+    def args(self) -> tuple[str, ...]:
+        """lists out the required arguments of this wrapped function."""
+        return self._required
+
+    @args.setter
+    def args(self, value: tuple[str, ...]) -> NoReturn:
+        raise AttributeError("args property is read-only.")
+
+    @property
+    def kwargs(self) -> tuple[str, ...]:
+        """lists out optional arguments of this wrapped function."""
+        return self._optional
+
+    @kwargs.setter
+    def kwargs(self, value: tuple[str, ...]) -> NoReturn:
+        raise AttributeError("kwargs property is read-only.")
+
     def install(self, *args: P.args, **kwargs: P.kwargs) -> dict[str, Any]:
         r"""Simillar to `inspect.BoundArguments` but a little bit faster,
         it is based off CPython's getargs.c's algorythms, this will also
-        attemptto install defaults if any are needed. However this does not
+        attempt to install defaults if any are needed. However this does not
         allow arbitrary arguments to be passed through. Instead, this should
-        primarlybe used for writing callback utilities that require a parent
+        primarly be used for writing callback utilities that require a parent
         function's signature.
 
         :raises TypeError: if argument parsing fails or has a argument that

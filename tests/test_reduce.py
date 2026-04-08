@@ -34,6 +34,23 @@ class BaseTestReduce:
 
         return self.reduce(sig)
 
+    def test_properties_1(self):
+        func = self.make_test_1()
+        assert func.args == ("a",)
+        assert func.kwargs == ("b",)
+
+    def test_properties_are_readonly(self):
+        func = self.make_test_1()
+        with pytest.raises(
+            AttributeError, match=r"args property is read-only."
+        ):
+            func.args = ("override",)
+
+        with pytest.raises(
+            AttributeError, match=r"kwargs property is read-only."
+        ):
+            func.kwargs = ("override",)
+
     def test_install(self) -> None:
         func = self.make_test_1()
         assert {"a": "1", "b": 2} == func.install(a="1", b=2)
@@ -97,6 +114,7 @@ class BaseTestReduce:
 
 class TestCReduce(BaseTestReduce):
     reduce = reduce_c
+
 
 class TestPyReduce(BaseTestReduce):
     reduce = reduce_py
