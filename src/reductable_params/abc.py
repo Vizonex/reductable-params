@@ -21,7 +21,7 @@ P = ParamSpec("P")
 # is exposed sort of scenario.
 
 
-class Reducable(Generic[P, T], ABC):
+class Reducable(ABC, Generic[P, T]):
     __wrapped__: Callable[P, T]
 
     @abstractmethod

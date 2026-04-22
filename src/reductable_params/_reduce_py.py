@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from types import GenericAlias
 from typing import Any, Generic, NoReturn
 
 from .abc import P, Reducable, T
@@ -23,8 +22,6 @@ class reduce(Generic[P, T]):
         "_params_set",
         "_required",
     )
-
-    __class_getitem__ = classmethod(GenericAlias)
 
     def __init__(
         self,

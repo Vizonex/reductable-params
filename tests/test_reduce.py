@@ -28,7 +28,7 @@ def addition_cases(request: pytest.FixtureRequest) -> tuple[int, ...]:
 class BaseTestReduce:
     reduce: type[Reducable]
 
-    def make_test_1(self) -> Reducable[[int, str | None], None]:
+    def make_test_1(self) -> Reducable[[str, int | None], None]:
         def sig(a: str, b: int | None = None):
             pass
 
@@ -53,11 +53,11 @@ class BaseTestReduce:
 
     def test_install(self) -> None:
         func = self.make_test_1()
-        assert {"a": "1", "b": 2} == func.install(a="1", b=2)
-        assert {"a": "1", "b": 2} == func.install("1", b=2)
+        assert {"a": "1", "b": 2} == func.install(a="1", b=2)  # type: ignore[call-arg]
+        assert {"a": "1", "b": 2} == func.install("1", b=2)  # type: ignore[call-arg]
         assert {"a": "1", "b": 2} == func.install("1", 2)
-        assert {"a": "1", "b": None} == func.install(a="1")
-        assert {"a": "1", "b": None} == func.install("1")
+        assert {"a": "1", "b": None} == func.install(a="1")  # type: ignore[call-arg]
+        assert {"a": "1", "b": None} == func.install("1")  # type: ignore[call-arg]
 
     def test_bad_install_too_many_arguments(self):
         func = self.make_test_1()
@@ -113,8 +113,8 @@ class BaseTestReduce:
 
 
 class TestCReduce(BaseTestReduce):
-    reduce = reduce_c
+    reduce = reduce_c  # type: ignore[assignment]
 
 
 class TestPyReduce(BaseTestReduce):
-    reduce = reduce_py
+    reduce = reduce_py  # type: ignore[assignment]

@@ -31,7 +31,7 @@ def _varnames_from_signature(
     func: object,
 ) -> tuple[tuple[str, ...], dict[str, Any]]:
     """extracts from a function's given signature but is slightly slower"""
-    sig = inspect.signature(func)
+    sig = inspect.signature(func)  # type: ignore[arg-type]
     parameters = sig.parameters
     required_args = [
         k for k, v in parameters.items() if v.kind == _POSITONAL_ONLY
