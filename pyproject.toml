@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Vizonex", email = "VizonexBusiness@gmail.com" }
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     'typing_extensions;  python_version<"3.14"'
 ]
