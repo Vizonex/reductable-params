@@ -3,4 +3,4 @@ from .abc import is_reducable
 
 __all__ = ("is_reducable", "reduce")
 __author__ = "Vizonex"
-__version__ = "0.3.0"
+__version__ = "0.3.1"
