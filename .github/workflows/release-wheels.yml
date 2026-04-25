@@ -20,6 +20,22 @@ jobs:
   build_sdist:
     uses: ./.github/workflows/run-sdist.yml
 
+  upload_github:
+    needs: [build_wheels, build_sdist]
+    # enable pre-releases to test to see if wheel uploading works or not.
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: dist/*
+
   upload_pypi:
     needs: [build_wheels, build_sdist]
     if: github.event_name == 'release' && github.event.action == 'published'
@@ -34,17 +50,6 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         # with:
         #   user: __token__
-        #   # NOTE: Changed to how I usually got about this. 
+        #   # NOTE: Changed to how I usually got about this.
         #   # I will remove after first release is taken care of...
         #   password: ${{ secrets.PYPI_API_TOKEN }}
-      
-      # Upload github release to the current page.
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        if: github.ref_type == 'tag'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: dist/*
-          draft: false
-          prerelease: false
