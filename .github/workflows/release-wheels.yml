@@ -8,7 +8,7 @@ on:
       - published
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -37,3 +37,13 @@ jobs:
         #   # NOTE: Changed to how I usually got about this. 
         #   # I will remove after first release is taken care of...
         #   password: ${{ secrets.PYPI_API_TOKEN }}
+      
+      # Upload github release to the current page.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: dist/*
+          draft: false
+          prerelease: false
