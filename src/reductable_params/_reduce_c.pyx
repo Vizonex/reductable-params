@@ -3,12 +3,6 @@
 from types import GenericAlias
 
 cimport cython
-from cpython.dict cimport (
-    PyDict_Contains,
-    PyDict_Copy,
-    PyDict_SetItem
-)
-from cpython.set cimport PySet_Contains
 from cpython.tuple cimport PyTuple_GET_SIZE
 
 from . import abc
@@ -44,11 +38,25 @@ cdef extern from "reduce_packer.h":
         object kwargs,
         object output
     )
+    # these typechecks will be whittled down to just object
+    # later. This is here as a security check until
+    # we can assume it's stable enough.
+    object reduce_install_args(
+        object name, # Function's possible name
+        object defaults,
+        object args, # tuple[Any, ...]
+        object kwargs, # dict[str, Any]
+        Py_ssize_t nargs, # PyTuple_GET_SIZE(args)
+        object params  # tuple[Any, ...]
+    )
+
 
 cdef extern from "Python.h":
-    Py_ssize_t PyDict_GET_SIZE(dict p)
+    Py_ssize_t PyDict_GET_SIZE(object p)
 
 
+# TODO: ReduceObject structure in Header file and just link it here.
+# to further migrate to Pure-C.
 @cython.freelist(REDUCE_FREELIST_SIZE)
 cdef class reduce:
     cdef:
@@ -120,10 +128,9 @@ cdef class reduce:
         # Mimics checks from vgetargskeywordsfast_impl in getargs.c
         cdef Py_ssize_t nargs = PyTuple_GET_SIZE(args)
         cdef Py_ssize_t ntotal = nargs +  PyDict_GET_SIZE(kwargs)
-        cdef Py_ssize_t n
-        cdef frozenset params = self._param_set
-        cdef object k, v
-        cdef dict output
+        cdef object output
+
+        # TODO: This section needs to go into C Next...
 
         if ntotal < self._nargs:
             raise TypeError(f"Not enough params in {self._name}")
@@ -138,27 +145,12 @@ cdef class reduce:
                     ntotal
                 )
             )
-
-        # Begin parsing while checking for overlapping arguments and copy off all the defaults.
-
-        output = PyDict_Copy(self._defaults)
-        for n in range(nargs):
-            # FIXME: Currently Cython still None Checks
-            k = self._params[n]
-            if PyDict_Contains(kwargs, k):
-                # arg present in tuple and dict
-                raise TypeError(
-                    "argument for %.200s given by name ('%s') and position (%d)" % (
-                    self._name, k, n + 1
-                    )
-                )
-            # XXX: Will let it take the heat for right now 
-            # until we can figure out how to make it stop segfaulting.
-            v = args[n]
-            PyDict_SetItem(output, k, v)
-
-        if reduce_install_kwargs(params, kwargs, output) < 0:
-            raise 
+        # NOTE: Cython still wants to make extra unwanted refs here
+        # but when the full migration into pure-c is done this will 
+        # ultimately be fixed.
+        output = reduce_install_args(self._name, self._defaults, args, kwargs, nargs, self._params)
+        if reduce_install_kwargs(self._param_set, kwargs, output) < 0:
+            raise
         return output
 
     @cython.nonecheck(False)
