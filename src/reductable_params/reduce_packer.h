@@ -10,6 +10,21 @@ extern "C" {
 #endif
 
 
+// typedef struct _reduce_object {
+//     PyObject_HEAD
+//     PyObject* wrapped; /* __wrapped__ */
+//     PyObject* defaults; /* dict[str, Any] */
+//     PyObject* name; /* str */
+//     Py_ssize_t nargs; /* len(required) */
+//     Py_ssize_t nparams; /* len(params) */
+//     PyObject* optional; /* tuple[str, ...] */
+//     PyObject* params; /* tuple[str, ...] */
+//     PyObject* param_set; /* frozenset[str] */
+//     PyObject* required; /* tuple[str, ...] */
+// } ReduceObject;
+
+
+
 /* This was more or less an optimization & Not wanting cython 
 to screw around or trigger segfaults with in the most critical sections.
 

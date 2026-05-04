@@ -13,14 +13,14 @@ class reduce(Generic[P, T]):
 
     __slots__ = (
         "__wrapped__",
+        "_args",
         "_defaults",
+        "_kwargs",
         "_name",
         "_nargs",
         "_nparams",
-        "_optional",
         "_params",
         "_params_set",
-        "_required",
     )
 
     def __init__(
@@ -28,7 +28,7 @@ class reduce(Generic[P, T]):
         func: Callable[P, T],
     ) -> None:
         # if for some reason inspect wants to grab it, let it do so...
-        required, optional = varnames(func)
+        args, kwargs = varnames(func)
 
         if name := getattr(func, "__name__", None):
             self._name = f"{name}()"
@@ -36,18 +36,18 @@ class reduce(Generic[P, T]):
             self._name = "function"
 
         self.__wrapped__ = func
-        self._defaults = optional
-        self._nargs = len(required)
-        self._optional = tuple(optional.keys())
-        self._params = required + self._optional
+        self._defaults = kwargs
+        self._nargs = len(args)
+        self._kwargs = tuple(kwargs.keys())
+        self._params = args + self._kwargs
         self._nparams = len(self._params)
         self._params_set = frozenset(self._params)
-        self._required = required
+        self._args = args
 
     @property
     def args(self) -> tuple[str, ...]:
         """lists out the required arguments of this wrapped function."""
-        return self._required
+        return self._args
 
     @args.setter
     def args(self, value: tuple[str, ...]) -> NoReturn:
@@ -56,7 +56,7 @@ class reduce(Generic[P, T]):
     @property
     def kwargs(self) -> tuple[str, ...]:
         """lists out optional arguments of this wrapped function."""
-        return self._optional
+        return self._kwargs
 
     @kwargs.setter
     def kwargs(self, value: tuple[str, ...]) -> NoReturn:
@@ -121,7 +121,7 @@ class reduce(Generic[P, T]):
         formations."""
 
         kwargs = self._defaults.copy()
-        args = [kwds[key] for key in self._required]
+        args = [kwds[key] for key in self._args]
 
         for k in self._params[self._nargs :]:
             if k in kwargs:

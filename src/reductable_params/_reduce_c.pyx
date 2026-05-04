@@ -26,9 +26,9 @@ cdef extern from "reduce_packer.h":
         object kwds, 
         object r_wrapped,
         object r_defaults, 
-        object r_required,
+        object r_args,
         object r_params,
-        const Py_ssize_t n_required,
+        const Py_ssize_t n_args,
         const Py_ssize_t n_params
     )
     # This one was a performance optimization 
@@ -64,10 +64,10 @@ cdef class reduce:
         dict _defaults
         str _name
         Py_ssize_t _nargs, _nparams
-        tuple _optional
+        tuple _kwargs
         tuple _params
         frozenset _param_set
-        tuple _required
+        tuple _args
 
     __class_getitem__ = classmethod(GenericAlias)
 
@@ -75,10 +75,10 @@ cdef class reduce:
         self,
         object func
     ) -> None:
-        cdef tuple required
-        cdef dict optional
+        cdef tuple args
+        cdef dict kwargs
         # The only bottlekneck is here when ititalizing althought this part is not planned to be benchmarked.
-        required, optional = varnames(func)
+        args, kwargs = varnames(func)
 
         if name := getattr(func, "__name__", None):
             self._name = f"{name}()"
@@ -86,18 +86,18 @@ cdef class reduce:
             self._name = "function"
 
         self.__wrapped__ = func
-        self._defaults = optional
-        self._nargs = len(required)
-        self._optional = tuple(optional.keys())
-        self._params = required + self._optional
+        self._defaults = kwargs
+        self._nargs = len(args)
+        self._kwargs = tuple(kwargs.keys())
+        self._params = args + self._kwargs
         self._param_set = frozenset(self._params)
         self._nparams = len(self._params)
-        self._required = required
+        self._args = args
     
     @property
     def args(self):
         """lists out the required arguments of this wrapped function."""
-        return self._required
+        return self._args
     
     @args.setter
     def args(self, value):
@@ -106,7 +106,7 @@ cdef class reduce:
     @property
     def kwargs(self):
         """lists out optional arguments of this wrapped function."""
-        return self._optional
+        return self._kwargs
 
     @kwargs.setter
     def kwargs(self, value):
@@ -164,7 +164,7 @@ cdef class reduce:
             kwds, 
             self.__wrapped__, 
             self._defaults,
-            self._required, 
+            self._args, 
             self._params, 
             self._nargs,
             self._nparams
