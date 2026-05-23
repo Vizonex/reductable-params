@@ -58,6 +58,26 @@ rd_raise_positional_error(PyObject* name, PyObject* key, Py_ssize_t pos){
     );
 }
 
+static inline void 
+rd_raise_wrong_size_error(PyObject* name, Py_ssize_t nparams, Py_ssize_t nargs, Py_ssize_t ntotal){
+    PyErr_Format(
+        PyExc_TypeError, "%.200S takes at most %zu %sargument%s (%i given)",
+        name, 
+        nparams,
+        ((nargs > 1) ? "" : "keyword"),
+        ((nparams == 1) ? "": "s"),
+        ntotal
+    );
+}
+
+static inline void
+rd_raise_not_enough_params(PyObject* name){
+    PyErr_Format(
+        PyExc_TypeError, "Not enough params in %.200S",
+        name
+    );
+}
+
 static PyObject* 
 reduce_install_args(
     PyObject* name, /* Function's possible name */
@@ -184,6 +204,47 @@ cleanup:
     return result;
 }
 
+
+static PyObject* 
+reduce_install(
+    PyObject* name, 
+    Py_ssize_t nparams,
+    Py_ssize_t rd_nargs,
+    
+    PyObject* args, 
+    PyObject* kwargs, 
+    
+    PyObject* param_set, 
+    PyObject* defaults,
+    PyObject* params
+){
+    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
+    Py_ssize_t ntotal = nargs + PyDict_GET_SIZE(kwargs);
+    if (ntotal < rd_nargs){
+        rd_raise_not_enough_params(name);
+        return NULL;
+    }
+    if (ntotal > nparams){
+        rd_raise_wrong_size_error(name, nparams, nargs, ntotal);
+        return NULL;
+    }
+    PyObject* output = reduce_install_args(
+        name, 
+        defaults, 
+        args, 
+        kwargs, 
+        nargs,
+        params
+    );
+    if (output == NULL){
+        return NULL;
+    }
+    if (reduce_install_kwargs(param_set, kwargs, output) < 0){
+        Py_CLEAR(output);
+        return NULL;
+    }
+    return output;
+};
 
 
 

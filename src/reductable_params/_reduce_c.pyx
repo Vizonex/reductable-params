@@ -1,9 +1,6 @@
 # cython: freethreading_compatible = True
 
-from types import GenericAlias
-
 cimport cython
-from cpython.tuple cimport PyTuple_GET_SIZE
 
 from . import abc
 from . import utils
@@ -31,28 +28,22 @@ cdef extern from "reduce_packer.h":
         const Py_ssize_t n_args,
         const Py_ssize_t n_params
     )
-    # This one was a performance optimization 
-    # in dictionary iterations
-    int reduce_install_kwargs(
-        object params,
-        object kwargs,
-        object output
-    )
-    # these typechecks will be whittled down to just object
-    # later. This is here as a security check until
-    # we can assume it's stable enough.
-    object reduce_install_args(
-        object name, # Function's possible name
+    object reduce_install(
+        object name, 
+        Py_ssize_t nparams,
+        Py_ssize_t rd_nargs,
+
+        object args, 
+        object kwargs, 
+
+        object param_set, 
         object defaults,
-        object args, # tuple[Any, ...]
-        object kwargs, # dict[str, Any]
-        Py_ssize_t nargs, # PyTuple_GET_SIZE(args)
-        object params  # tuple[Any, ...]
+        object params
     )
 
 
 cdef extern from "Python.h":
-    Py_ssize_t PyDict_GET_SIZE(object p)
+    object Py_GenericAlias(object origin, object args)
 
 
 # TODO: ReduceObject structure in Header file and just link it here.
@@ -69,7 +60,9 @@ cdef class reduce:
         frozenset _param_set
         tuple _args
 
-    __class_getitem__ = classmethod(GenericAlias)
+    @classmethod
+    def __class_getitem__(cls, *args):
+        return Py_GenericAlias(cls, args)
 
     def __init__(
         self,
@@ -126,32 +119,17 @@ cdef class reduce:
             overlaps in either args or kwargs.
         """
         # Mimics checks from vgetargskeywordsfast_impl in getargs.c
-        cdef Py_ssize_t nargs = PyTuple_GET_SIZE(args)
-        cdef Py_ssize_t ntotal = nargs +  PyDict_GET_SIZE(kwargs)
-        cdef object output
+        return reduce_install(
+            self._name, 
+            self._nparams,
+            self._nargs, 
+            args,
+            kwargs, 
+            self._param_set, 
+            self._defaults, 
+            self._params
+        )
 
-        # TODO: This section needs to go into C Next...
-
-        if ntotal < self._nargs:
-            raise TypeError(f"Not enough params in {self._name}")
-
-        elif ntotal > self._nparams:
-            raise TypeError(
-                "%.200s takes at most %d %sargument%s (%i given)" % (
-                    self._name,
-                    self._nparams,
-                    "keyword" if not self._nargs else "",
-                    "" if self._nparams == 1 else "s",
-                    ntotal
-                )
-            )
-        # NOTE: Cython still wants to make extra unwanted refs here
-        # but when the full migration into pure-c is done this will 
-        # ultimately be fixed.
-        output = reduce_install_args(self._name, self._defaults, args, kwargs, nargs, self._params)
-        if reduce_install_kwargs(self._param_set, kwargs, output) < 0:
-            raise
-        return output
 
     @cython.nonecheck(False)
     def __call__(self, dict kwds):
