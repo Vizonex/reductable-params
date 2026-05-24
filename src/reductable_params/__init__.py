@@ -1,4 +1,4 @@
-from ._reduce import reduce
+from ._compat import reduce
 from .abc import is_reducable
 
 __all__ = ("is_reducable", "reduce")

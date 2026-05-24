@@ -6,7 +6,7 @@ from timeit import repeat
 import matplotlib.pyplot as plt
 
 # from pluggy import PluginManager
-from reductable_params._reduce_c import reduce as reduce_c
+from reductable_params._reduce import reduce as reduce_c
 from reductable_params._reduce_py import reduce as reduce_py
 
 
@@ -97,7 +97,7 @@ def benchmark_installing():
     results = [
         bench_func(test_signature, "inspect standard library"),
         bench_func(test_rd_py, "reduce / pure python"),
-        bench_func(test_rd_c, "reduce / cython"),
+        bench_func(test_rd_c, "reduce / pure C"),
     ]
     draw_graph(
         results, "install-benchmark.png", "Packing parameters", "100000 calls"

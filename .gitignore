@@ -8,7 +8,7 @@ wheels/
 *.html
 *.pyd
 *.so
-*.c
+*_reduce_c.c
 
 build
 

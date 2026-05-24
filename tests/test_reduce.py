@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
+from reductable_params._reduce import reduce as reduce_c
 
-from reductable_params._reduce_c import reduce as reduce_c
 from reductable_params._reduce_py import reduce as reduce_py
 from reductable_params.abc import Reducable, is_reducable
 
@@ -41,14 +41,10 @@ class BaseTestReduce:
 
     def test_properties_are_readonly(self):
         func = self.make_test_1()
-        with pytest.raises(
-            AttributeError, match=r"args property is read-only."
-        ):
+        with pytest.raises(AttributeError):
             func.args = ("override",)
 
-        with pytest.raises(
-            AttributeError, match=r"kwargs property is read-only."
-        ):
+        with pytest.raises(AttributeError):
             func.kwargs = ("override",)
 
     def test_install(self) -> None:
