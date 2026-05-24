@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from reductable_params._reduce import reduce as reduce_c
 
+from reductable_params._reduce import reduce as reduce_c
 from reductable_params._reduce_py import reduce as reduce_py
 from reductable_params.abc import Reducable, is_reducable
 
