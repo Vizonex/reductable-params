@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["setuptools", "cython", "wheel"]
+requires = ["setuptools", "wheel"]
 
 [tool.setuptools.dynamic]
 version = {attr = "reductable_params.__version__"}
