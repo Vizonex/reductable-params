@@ -12,18 +12,18 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["setuptools", "cython", "wheel"]
+requires = ["setuptools", "wheel"]
 
 [tool.setuptools.dynamic]
 version = {attr = "reductable_params.__version__"}
 
-[tool.setuptools]
-# TODO: This will be gotten rid of and replaced with a setup.py file
-# to add compile flags for maximum performance
-# SEE: https://github.com/Vizonex/reductable-params/issues/15
-ext-modules = [
-{name="reductable_params._reduce_c", sources = ["src/reductable_params/_reduce_c.pyx"]}
-]
+# [tool.setuptools]
+# # TODO: This will be gotten rid of and replaced with a setup.py file
+# # to add compile flags for maximum performance
+# # SEE: https://github.com/Vizonex/reductable-params/issues/15
+# ext-modules = [
+# {name="reductable_params._reduce_c", sources = ["src/reductable_params/_reduce_c.pyx"]}
+# ]
 
 [tool.ruff]
 line-length = 79

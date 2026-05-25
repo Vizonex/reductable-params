@@ -10,20 +10,6 @@ extern "C" {
 #endif
 
 
-// typedef struct _reduce_object {
-//     PyObject_HEAD
-//     PyObject* wrapped; /* __wrapped__ */
-//     PyObject* defaults; /* dict[str, Any] */
-//     PyObject* name; /* str */
-//     Py_ssize_t nargs; /* len(required) */
-//     Py_ssize_t nparams; /* len(params) */
-//     PyObject* optional; /* tuple[str, ...] */
-//     PyObject* params; /* tuple[str, ...] */
-//     PyObject* param_set; /* frozenset[str] */
-//     PyObject* required; /* tuple[str, ...] */
-// } ReduceObject;
-
-
 
 /* This was more or less an optimization & Not wanting cython 
 to screw around or trigger segfaults with in the most critical sections.
@@ -97,7 +83,7 @@ reduce_install_args(
         if (k == NULL) goto fail;
         Py_INCREF(k);
         
-        if (PyDict_Contains(kwargs, k)){
+        if ((kwargs != NULL) && PyDict_Contains(kwargs, k)){
             /* argument possibly present in both tuple and 
                 if anything is concerned, this is not what we want */
             Py_DECREF(k);
@@ -140,7 +126,7 @@ static int reduce_install_kwargs(
      * could be considered unsafe or dangerous so we use a 
      * Py_BEGIN_CRITICAL_SECTION to protect all keyword arguments 
      * being installed. */
-
+    
     Py_BEGIN_CRITICAL_SECTION(kwargs);
     while (PyDict_Next(kwargs, &pos, &key, &value)){
         if (!PySet_Contains(params, key)){
@@ -154,6 +140,7 @@ static int reduce_install_kwargs(
         }
     }
     Py_END_CRITICAL_SECTION();
+    
     return 0;
 }
 
@@ -205,8 +192,12 @@ cleanup:
 }
 
 
+#define SIZE_OR_NULL(args, FUNC) \
+    (args == NULL) ? 0 : FUNC(args)
+
+
 static PyObject* 
-reduce_install(
+rd_install(
     PyObject* name, 
     Py_ssize_t nparams,
     Py_ssize_t rd_nargs,
@@ -218,8 +209,8 @@ reduce_install(
     PyObject* defaults,
     PyObject* params
 ){
-    Py_ssize_t nargs = PyTuple_GET_SIZE(args);
-    Py_ssize_t ntotal = nargs + PyDict_GET_SIZE(kwargs);
+    Py_ssize_t nargs = (SIZE_OR_NULL(args, PyTuple_GET_SIZE));
+    Py_ssize_t ntotal = nargs + (SIZE_OR_NULL(kwargs, PyDict_GET_SIZE));
     if (ntotal < rd_nargs){
         rd_raise_not_enough_params(name);
         return NULL;
@@ -238,6 +229,9 @@ reduce_install(
     );
     if (output == NULL){
         return NULL;
+    }
+    if (kwargs == NULL){
+        return output;
     }
     if (reduce_install_kwargs(param_set, kwargs, output) < 0){
         Py_CLEAR(output);

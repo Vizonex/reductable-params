@@ -8,7 +8,7 @@ if sys.implementation.name != "cpython":
 # isort: off
 if not NO_EXTENSIONS:  # pragma: no branch
     try:
-        from ._reduce_c import reduce as reduce_c
+        from ._reduce import reduce as reduce_c
 
         reduce = reduce_c  # type: ignore[misc, assignment]
     except ImportError:  # pragma: no cover
