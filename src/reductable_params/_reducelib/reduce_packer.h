@@ -64,85 +64,85 @@ rd_raise_not_enough_params(PyObject* name){
     );
 }
 
-static PyObject* 
-reduce_install_args(
-    PyObject* name, /* Function's possible name */
-    PyObject* defaults,
-    PyObject* args, /* tuple[Any, ...] */
-    PyObject* kwargs, /* dict */
-    Py_ssize_t nargs,  /* PyTuple_GET_SIZE(args) */
-    PyObject* params  /* tuple[Any, ...] */
-){
-    PyObject* output, *k, *v;
-    output = PyDict_Copy(defaults);
-    if (output == NULL) return NULL;
+// static PyObject* 
+// reduce_install_args(
+//     PyObject* name, /* Function's possible name */
+//     PyObject* defaults,
+//     PyObject* args, /* tuple[Any, ...] */
+//     PyObject* kwargs, /* dict */
+//     Py_ssize_t nargs,  /* PyTuple_GET_SIZE(args) */
+//     PyObject* params  /* tuple[Any, ...] */
+// ){
+//     PyObject* output, *k, *v;
+//     output = PyDict_Copy(defaults);
+//     if (output == NULL) return NULL;
 
-    for (Py_ssize_t n = 0; n < nargs; n++){
-        /* Counting on Zero Failure for params this code should never fail. */
-        k = PyTuple_GET_ITEM(params, n);
-        if (k == NULL) goto fail;
-        Py_INCREF(k);
+//     for (Py_ssize_t n = 0; n < nargs; n++){
+//         /* Counting on Zero Failure for params this code should never fail. */
+//         k = PyTuple_GET_ITEM(params, n);
+//         if (k == NULL) goto fail;
+//         Py_INCREF(k);
         
-        if ((kwargs != NULL) && PyDict_Contains(kwargs, k)){
-            /* argument possibly present in both tuple and 
-                if anything is concerned, this is not what we want */
-            Py_DECREF(k);
-            rd_raise_positional_error(name, k, n);
-            goto fail;
-        }
-        v = PyTuple_GET_ITEM(args, n);
-        /* IndexError cannot normally happen but will still see if this does happen. */
-        if (v == NULL){
-            Py_DECREF(k);
-            goto fail;
-        }
-        Py_INCREF(v);
-        int err = PyDict_SetItem(output, k, v);
-        /* cleanup object copies before error checking... */
-        Py_DECREF(k);
-        Py_DECREF(v);
-        if (err < 0){
-            goto fail;
-        }
-    }
-    /* TODO: Combine this function with reduce_install_kwargs */
-    return output;
-fail:
-    Py_CLEAR(output);
-    return NULL;
-};
+//         if ((kwargs != NULL) && PyDict_Contains(kwargs, k)){
+//             /* argument possibly present in both tuple and 
+//                 if anything is concerned, this is not what we want */
+//             Py_DECREF(k);
+//             rd_raise_positional_error(name, k, n);
+//             goto fail;
+//         }
+//         v = PyTuple_GET_ITEM(args, n);
+//         /* IndexError cannot normally happen but will still see if this does happen. */
+//         if (v == NULL){
+//             Py_DECREF(k);
+//             goto fail;
+//         }
+//         Py_INCREF(v);
+//         int err = PyDict_SetItem(output, k, v);
+//         /* cleanup object copies before error checking... */
+//         Py_DECREF(k);
+//         Py_DECREF(v);
+//         if (err < 0){
+//             goto fail;
+//         }
+//     }
+//     /* TODO: Combine this function with reduce_install_kwargs */
+//     return output;
+// fail:
+//     Py_CLEAR(output);
+//     return NULL;
+// };
 
 /* TODO: mark functions as *_impl implying that it's a implementation of or we could use a 
  * "rd_*" to imply that it's a lower level function. */
-static int reduce_install_kwargs(
-    PyObject* params,
-    PyObject* kwargs,
-    PyObject* output
-){
-    PyObject* key, *value;
-    Py_ssize_t pos = 0;
+// static int reduce_install_kwargs(
+//     PyObject* params,
+//     PyObject* kwargs,
+//     PyObject* output
+// ){
+//     PyObject* key, *value;
+//     Py_ssize_t pos = 0;
 
-    /* Iterations of Python Dictionarys in Free-Threaded Mode 
-     * could be considered unsafe or dangerous so we use a 
-     * Py_BEGIN_CRITICAL_SECTION to protect all keyword arguments 
-     * being installed. */
+//     /* Iterations of Python Dictionarys in Free-Threaded Mode 
+//      * could be considered unsafe or dangerous so we use a 
+//      * Py_BEGIN_CRITICAL_SECTION to protect all keyword arguments 
+//      * being installed. */
     
-    Py_BEGIN_CRITICAL_SECTION(kwargs);
-    while (PyDict_Next(kwargs, &pos, &key, &value)){
-        if (!PySet_Contains(params, key)){
-            /* force up a keyerror if object is not present 
-             * in the actual defaults */
-            PyErr_SetKeyError(key);
-            return -1;
-        }
-        if (PyDict_SetItem(output, key, value) < 0){
-            return -1;
-        }
-    }
-    Py_END_CRITICAL_SECTION();
+//     Py_BEGIN_CRITICAL_SECTION(kwargs);
+//     while (PyDict_Next(kwargs, &pos, &key, &value)){
+//         if (!PySet_Contains(params, key)){
+//             /* force up a keyerror if object is not present 
+//              * in the actual defaults */
+//             PyErr_SetKeyError(key);
+//             return -1;
+//         }
+//         if (PyDict_SetItem(output, key, value) < 0){
+//             return -1;
+//         }
+//     }
+//     Py_END_CRITICAL_SECTION();
     
-    return 0;
-}
+//     return 0;
+// }
 
 static PyObject* reduce_call(
     PyObject* kwds, 
@@ -192,53 +192,54 @@ cleanup:
 }
 
 
-#define SIZE_OR_NULL(args, FUNC) \
-    (args == NULL) ? 0 : FUNC(args)
+// #define SIZE_OR_NULL(args, FUNC) \
+//     (args == NULL) ? 0 : FUNC(args)
 
 
-static PyObject* 
-rd_install(
-    PyObject* name, 
-    Py_ssize_t nparams,
-    Py_ssize_t rd_nargs,
+/* TODO: (VectorCall would increase performance here...) */
+// static PyObject* 
+// rd_install(
+//     PyObject* name, 
+//     Py_ssize_t nparams,
+//     Py_ssize_t rd_nargs,
     
-    PyObject* args, 
-    PyObject* kwargs, 
+//     PyObject* args, 
+//     PyObject* kwargs, 
     
-    PyObject* param_set, 
-    PyObject* defaults,
-    PyObject* params
-){
-    Py_ssize_t nargs = (SIZE_OR_NULL(args, PyTuple_GET_SIZE));
-    Py_ssize_t ntotal = nargs + (SIZE_OR_NULL(kwargs, PyDict_GET_SIZE));
-    if (ntotal < rd_nargs){
-        rd_raise_not_enough_params(name);
-        return NULL;
-    }
-    if (ntotal > nparams){
-        rd_raise_wrong_size_error(name, nparams, nargs, ntotal);
-        return NULL;
-    }
-    PyObject* output = reduce_install_args(
-        name, 
-        defaults, 
-        args, 
-        kwargs, 
-        nargs,
-        params
-    );
-    if (output == NULL){
-        return NULL;
-    }
-    if (kwargs == NULL){
-        return output;
-    }
-    if (reduce_install_kwargs(param_set, kwargs, output) < 0){
-        Py_CLEAR(output);
-        return NULL;
-    }
-    return output;
-};
+//     PyObject* param_set, 
+//     PyObject* defaults,
+//     PyObject* params
+// ){
+//     Py_ssize_t nargs = (SIZE_OR_NULL(args, PyTuple_GET_SIZE));
+//     Py_ssize_t ntotal = nargs + (SIZE_OR_NULL(kwargs, PyDict_GET_SIZE));
+//     if (ntotal < rd_nargs){
+//         rd_raise_not_enough_params(name);
+//         return NULL;
+//     }
+//     if (ntotal > nparams){
+//         rd_raise_wrong_size_error(name, nparams, nargs, ntotal);
+//         return NULL;
+//     }
+//     PyObject* output = reduce_install_args(
+//         name, 
+//         defaults, 
+//         args, 
+//         kwargs, 
+//         nargs,
+//         params
+//     );
+//     if (output == NULL){
+//         return NULL;
+//     }
+//     if (kwargs == NULL){
+//         return output;
+//     }
+//     if (reduce_install_kwargs(param_set, kwargs, output) < 0){
+//         Py_CLEAR(output);
+//         return NULL;
+//     }
+//     return output;
+// };
 
 
 
