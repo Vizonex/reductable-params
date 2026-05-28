@@ -265,19 +265,19 @@ PyDoc_STRVAR(
 "overlaps in either args or kwargs."
 );
 
-static PyObject*
-reduce_install(ReduceObject* self, PyObject* args, PyObject* kwargs){
-    return rd_install(
-        self->name,
-        self->nparams,
-        self->nargs,
-        args,
-        kwargs,
-        self->param_set,
-        self->defaults,
-        self->params
-    );
-}
+// static PyObject*
+// reduce_install(ReduceObject* self, PyObject* args, PyObject* kwargs){
+//     return rd_install(
+//         self->name,
+//         self->nparams,
+//         self->nargs,
+//         args,
+//         kwargs,
+//         self->param_set,
+//         self->defaults,
+//         self->params
+//     );
+// }
 
 
 static PyObject* rd_install_args(
