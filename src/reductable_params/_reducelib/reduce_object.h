@@ -252,7 +252,7 @@ reduce_kwargs_get(ReduceObject *self, void *Py_UNUSED(arg))
     return rd_get_kwargs(self);
 }
 
-
+// TODO: Vectorcall
 PyDoc_STRVAR(
     reduce_install__doc__,
 "Simillar to `inspect.BoundArguments` but a little bit faster, "
@@ -265,18 +265,144 @@ PyDoc_STRVAR(
 "overlaps in either args or kwargs."
 );
 
+// static PyObject*
+// reduce_install(ReduceObject* self, PyObject* args, PyObject* kwargs){
+//     return rd_install(
+//         self->name,
+//         self->nparams,
+//         self->nargs,
+//         args,
+//         kwargs,
+//         self->param_set,
+//         self->defaults,
+//         self->params
+//     );
+// }
+
+
+static PyObject* rd_install_args(
+    ReduceObject* self,  
+    PyObject *const *args, 
+    size_t nargs,
+    PyObject* kwnames,
+    size_t nkwargs
+){
+    PyObject* output, *k, *v;
+    output = PyDict_Copy(self->defaults);
+    if (output == NULL) return NULL;
+
+    /* fast shortcut */
+    if (!nargs) goto finish;
+
+    for (size_t n = 0; n < nargs; n++){
+        k = PyTuple_GET_ITEM(self->params, n);
+        if (k == NULL) goto fail;
+        Py_INCREF(k);
+
+        if ((nkwargs > 0) && PySequence_Contains(kwnames, k)){
+            Py_DECREF(k);
+            rd_raise_positional_error(self->name, k, n);
+            goto fail;
+        }
+        
+        v = args[n];
+
+        /* IndexError cannot normally happen but will still see if this does happen. */
+        if (v == NULL){
+            Py_DECREF(k);
+            goto fail;
+        }
+        Py_INCREF(v);
+        int err = PyDict_SetItem(output, k, v);
+        /* cleanup object copies before error checking... */
+        Py_DECREF(k);
+        Py_DECREF(v);
+        if (err < 0){
+            goto fail;
+        }
+    }
+finish:
+    return output;
+fail:
+    Py_CLEAR(output);
+    return NULL;
+}
+
+
+static int rd_install_kwargs(
+    ReduceObject* self,  
+    PyObject *const *args, 
+    size_t nargs,
+    PyObject* kwnames,
+    size_t nkwargs,
+    PyObject* output
+){
+    /* fast shortcut */
+    if (!nkwargs) 
+        return 0;
+
+    PyObject* key;
+    PyObject* value;
+    PyObject* param_set = self->param_set;
+
+    for (size_t n = 0; n < nkwargs; n++){
+        key = PyTuple_GET_ITEM(kwnames, n);
+        value = args[n + nargs];
+        if ((key == NULL) || (value == NULL)){
+            return -1;
+        }
+        Py_INCREF(key);
+        if (!PySet_Contains(param_set, key)){
+            /* force up a keyerror if object is not present 
+             * in the actual defaults */
+            PyErr_SetKeyError(key);
+            Py_DECREF(key);
+            return -1;
+        }
+
+        Py_INCREF(value);
+        int err = PyDict_SetItem(output, key, value);
+        Py_DECREF(key);
+        Py_DECREF(value);
+        if (err < 0)
+            return -1;
+    }
+    return 0;
+}
+
+
 static PyObject*
-reduce_install(ReduceObject* self, PyObject* args, PyObject* kwargs){
-    return rd_install(
-        self->name,
-        self->nparams,
-        self->nargs,
-        args,
-        kwargs,
-        self->param_set,
-        self->defaults,
-        self->params
-    );
+reduce_install_vectorcall(
+    ReduceObject* self,  
+    PyObject *const *args, 
+    size_t nargsf, 
+    PyObject *kwnames
+){
+    Py_ssize_t nargs = PyVectorcall_NARGS(nargsf);
+    Py_ssize_t nkwargs = (kwnames == NULL) ? 0 : PyTuple_GET_SIZE(kwnames);
+    Py_ssize_t ntotal = nargs + nkwargs;
+
+    if (ntotal < self->nargs){
+        rd_raise_not_enough_params(self->name);
+        return NULL;
+    }
+    if (ntotal > self->nparams){
+        rd_raise_wrong_size_error(self->name, self->nparams, nargs, ntotal);
+        return NULL;
+    }
+
+    PyObject* output = rd_install_args(self, args, nargs, kwnames, nkwargs);
+    if (output == NULL){
+        return NULL;
+    }
+    if (!nkwargs){
+        return output;
+    }
+    if (rd_install_kwargs(self, args, nargs, kwnames, nkwargs, output) < 0){
+        Py_CLEAR(output);
+        return NULL;
+    }
+    return output;
 }
 
 
@@ -316,8 +442,8 @@ reduce_tp_call(
 
 static PyMethodDef reduce_methods[] = {
     {"install", 
-     (PyCFunction)reduce_install, 
-     METH_VARARGS | METH_KEYWORDS,
+     (PyCFunction)reduce_install_vectorcall, 
+      METH_FASTCALL | METH_KEYWORDS,
      reduce_install__doc__},
     {"__class_getitem__",
       (PyCFunction)Py_GenericAlias,
