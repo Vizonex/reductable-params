@@ -10,7 +10,7 @@ if __name__ == "__main__":
             Extension(
                 "reductable_params._reduce",
                 ["src/reductable_params/_reduce.c"],
-                extra_compile_args=FLAGS
+                extra_compile_args=FLAGS,
             )
         ]
     )
