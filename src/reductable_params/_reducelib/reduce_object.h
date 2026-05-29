@@ -63,7 +63,7 @@ static int reduce_parse_args(
     // NOTE: I don't expect everyone not to use a **kwargs
     // in fact even aiocallback makes this mistake regularly.
     // so for now, let's make a patch for kwargs to get it's size.
-    if ((kwargs != NULL) || (PyDict_GET_SIZE(kwargs) != 0)){
+    if ((kwargs != NULL) && (PyDict_GET_SIZE(kwargs) != 0)){
         PyErr_Format(PyExc_TypeError,
                      "%s() doesn't accept keyword arguments", 
                      func_name);
