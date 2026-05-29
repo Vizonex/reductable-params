@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+from typing import ParamSpec, TypeVar
+
 import pytest
 
 from reductable_params._reduce import reduce as reduce_c
 from reductable_params._reduce_py import reduce as reduce_py
 from reductable_params.abc import Reducable, is_reducable
+
+_T = TypeVar("_T")
+_P = ParamSpec("_P")
 
 
 @pytest.fixture(
@@ -106,6 +111,14 @@ class BaseTestReduce:
     def test_is_reducable_check(self):
         assert is_reducable(self.make_test_1())
         assert is_reducable(0xDEAD) is False
+
+    def test_wrapper(self):
+        # XXX: Meant to Simulate a bug with 1.0.0 C Extension
+        # where Py_DECREF(func) on non-failure caused 1.0.0 to
+        # trigger a complete mealtdown and then crash.
+        func = self.make_test_1()
+        wrapped = func.__wrapped__
+        assert wrapped.__name__ == "sig"
 
 
 class TestCReduce(BaseTestReduce):

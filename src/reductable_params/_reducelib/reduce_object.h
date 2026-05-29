@@ -144,12 +144,13 @@ static int rd_init(ReduceObject* self, PyObject* func, mod_state* state){
     
     PyObject* defaults_items = NULL;
     PyObject* args_and_kwargs = NULL;
-    
     PyObject* name = rd_get_name(func, state);
+
     if (name == NULL){
         return -1;
     }
     self->name = name;
+
     args_and_kwargs = rd_varnames(func, state);
 
     if (args_and_kwargs == NULL){
@@ -188,8 +189,11 @@ static int rd_init(ReduceObject* self, PyObject* func, mod_state* state){
 
     self->nparams = PyTuple_GET_SIZE(self->params);
     self->nargs = PyTuple_GET_SIZE(self->args);
-    ret = 0;
-    
+
+    Py_CLEAR(defaults_items);
+    Py_CLEAR(args_and_kwargs);
+    return 0;
+
 finish:
     Py_CLEAR(defaults_items);
     Py_CLEAR(args_and_kwargs);
@@ -225,19 +229,26 @@ rd_get_args(ReduceObject* self){
 //     return NULL;
 // }
 
-static PyObject* 
-reduce_args_get(ReduceObject *self, void *Py_UNUSED(arg))
-{
-    return rd_get_args(self);
-}
+// static PyObject* 
+// reduce_args_get(ReduceObject *self, void *Py_UNUSED(arg))
+// {
+//     return rd_get_args(self);
+// }
 
 PyDoc_STRVAR(reduce_kwargs__doc__,
 "lists out optional arguments of this wrapped function."
 );
 
+// static PyObject* 
+// rd_get_kwargs(ReduceObject* self){
+//     return Py_NewRef(self->kwargs);
+// }
+
+
 static PyObject* 
-rd_get_kwargs(ReduceObject* self){
-    return Py_NewRef(self->kwargs);
+reduce__wrapped__get(ReduceObject *self, void *Py_UNUSED(arg))
+{
+    return Py_NewRef(self->wrapped);
 }
 
 // static PyObject* 
@@ -246,11 +257,11 @@ rd_get_kwargs(ReduceObject* self){
 //     return NULL;
 // }
 
-static PyObject* 
-reduce_kwargs_get(ReduceObject *self, void *Py_UNUSED(arg))
-{
-    return rd_get_kwargs(self);
-}
+// static PyObject* 
+// reduce_kwargs_get(ReduceObject *self, void *Py_UNUSED(arg))
+// {
+//     return rd_get_kwargs(self);
+// }
 
 // TODO: Vectorcall
 PyDoc_STRVAR(
@@ -454,6 +465,7 @@ static PyMethodDef reduce_methods[] = {
 };
 
 static PyMemberDef reduce_members[] = {
+    // XXX: Crashes so we can't do __wrapped__
     {"__wrapped__",
      Py_T_OBJECT_EX,
      offsetof(ReduceObject, wrapped),
@@ -475,8 +487,9 @@ static PyMemberDef reduce_members[] = {
 };
 
 // static PyGetSetDef reduce_getsetlist[] = {
-//     {"args", (getter)reduce_args_get, NULL, reduce_args__doc__},
-//     {"kwargs", (getter)reduce_kwargs_get, NULL, reduce_kwargs__doc__},
+//     {"__wrapped__", (getter)reduce__wrapped__get, NULL, NULL},
+//     // {"args", (getter)reduce_args_get, NULL, reduce_args__doc__},
+//     // {"kwargs", (getter)reduce_kwargs_get, NULL, reduce_kwargs__doc__},
 //     {NULL} /* Sentinel */
 // };
 
