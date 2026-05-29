@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import ParamSpec, TypeVar
+from typing import Any, ParamSpec, TypeVar
 
 import pytest
 
@@ -36,6 +36,12 @@ class BaseTestReduce:
     def make_test_1(self) -> Reducable[[str, int | None], None]:
         def sig(a: str, b: int | None = None):
             pass
+
+        return self.reduce(sig)
+
+    def make_test_2(self) -> Reducable[[str, int | None], dict[str, Any]]:
+        def sig(a: str, b: int | None = None):
+            return {"a": a, "b": b}
 
         return self.reduce(sig)
 
@@ -119,6 +125,21 @@ class BaseTestReduce:
         func = self.make_test_1()
         wrapped = func.__wrapped__
         assert wrapped.__name__ == "sig"
+
+    def test_proxying(self):
+        func = self.make_test_2()
+
+        # NOTE: A Proxy-like function might be implemented in the future
+        # whenever further argument injecting isn't needed.
+        def proxy(*args, **kwargs):
+            args = func.install(*args, **kwargs)
+            return func(args)
+
+        assert {"a": "1", "b": 2} == proxy(a="1", b=2)  # type: ignore[call-arg]
+        assert {"a": "1", "b": 2} == proxy("1", b=2)  # type: ignore[call-arg]
+        assert {"a": "1", "b": 2} == proxy("1", 2)
+        assert {"a": "1", "b": None} == proxy(a="1")  # type: ignore[call-arg]
+        assert {"a": "1", "b": None} == proxy("1")  # type: ignore[call-arg]
 
 
 class TestCReduce(BaseTestReduce):

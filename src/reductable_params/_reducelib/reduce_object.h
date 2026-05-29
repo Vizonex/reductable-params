@@ -60,14 +60,15 @@ static int reduce_parse_args(
         *out = NULL;
         return -1;
     }
-
-    if (kwargs != NULL){
+    // NOTE: I don't expect everyone not to use a **kwargs
+    // in fact even aiocallback makes this mistake regularly.
+    // so for now, let's make a patch for kwargs to get it's size.
+    if ((kwargs != NULL) && (PyDict_GET_SIZE(kwargs) != 0)){
         PyErr_Format(PyExc_TypeError,
                      "%s() doesn't accept keyword arguments", 
                      func_name);
         *out = NULL;
         return -1;
-
     }
     *out = arg;
     return 0;
@@ -426,6 +427,9 @@ PyDoc_STRVAR(
     "formations."
 );
 
+/* TODO: vectorcall is possible for a future 1.X.X because we 
+just use one single argument and performance wouldn't need 
+changing.*/
 static PyObject* 
 reduce_tp_call(
     ReduceObject* self, 
