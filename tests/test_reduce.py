@@ -141,6 +141,27 @@ class BaseTestReduce:
         assert {"a": "1", "b": None} == proxy(a="1")  # type: ignore[call-arg]
         assert {"a": "1", "b": None} == proxy("1")  # type: ignore[call-arg]
 
+    def test_forgiveableness_with_sending(self):
+        func = self.make_test_2()
+
+        # This is meant to simulate a bug with hooks in aiocallback & aioplugin
+        # where reduce is not letting kwargs through even though we might not
+        # have any to pass.
+        def proxy2(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        # NOTE: A Proxy-like function might be implemented in the future
+        # whenever further argument injecting isn't needed.
+        def proxy(*args, **kwargs):
+            args = func.install(*args, **kwargs)
+            return proxy2(args)
+
+        assert {"a": "1", "b": 2} == proxy(a="1", b=2)  # type: ignore[call-arg]
+        assert {"a": "1", "b": 2} == proxy("1", b=2)  # type: ignore[call-arg]
+        assert {"a": "1", "b": 2} == proxy("1", 2)
+        assert {"a": "1", "b": None} == proxy(a="1")  # type: ignore[call-arg]
+        assert {"a": "1", "b": None} == proxy("1")  # type: ignore[call-arg]
+
 
 class TestCReduce(BaseTestReduce):
     reduce = reduce_c  # type: ignore[assignment]
