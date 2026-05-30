@@ -163,7 +163,6 @@ class BaseTestReduce:
         assert {"a": "1", "b": None} == proxy("1")  # type: ignore[call-arg]
 
 
-
 class TestCReduce(BaseTestReduce):
     reduce = reduce_c  # type: ignore[assignment]
 
