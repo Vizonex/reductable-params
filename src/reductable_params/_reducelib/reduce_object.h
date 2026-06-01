@@ -145,6 +145,12 @@ static int rd_init(ReduceObject* self, PyObject* func, mod_state* state){
     
     PyObject* defaults_items = NULL;
     PyObject* args_and_kwargs = NULL;
+
+    if (!PyCallable_Check(func)){
+        PyErr_SetString(PyExc_TypeError, "function must be callable.");
+        return -1;
+    }
+
     PyObject* name = rd_get_name(func, state);
 
     if (name == NULL){
@@ -161,9 +167,10 @@ static int rd_init(ReduceObject* self, PyObject* func, mod_state* state){
     self->wrapped = Py_NewRef(func);
     
     /* args , kwargs */
-    
+    Py_INCREF(args_and_kwargs);
     self->args = Py_NewRef(PyTuple_GET_ITEM(args_and_kwargs, 0));
     self->defaults = Py_NewRef(PyTuple_GET_ITEM(args_and_kwargs, 1));
+    Py_DECREF(args_and_kwargs);
     
 
     defaults_items = PyMapping_Keys(self->defaults);

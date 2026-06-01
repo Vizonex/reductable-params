@@ -28,6 +28,8 @@ class reduce(Generic[P, T]):
         func: Callable[P, T],
     ) -> None:
         # if for some reason inspect wants to grab it, let it do so...
+        if not callable(func):
+            raise TypeError("function must be callable.")
         args, kwargs = varnames(func)
 
         if name := getattr(func, "__name__", None):

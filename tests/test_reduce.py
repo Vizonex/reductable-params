@@ -162,6 +162,10 @@ class BaseTestReduce:
         assert {"a": "1", "b": None} == proxy(a="1")  # type: ignore[call-arg]
         assert {"a": "1", "b": None} == proxy("1")  # type: ignore[call-arg]
 
+    def test_bad_function(self) -> None:
+        with pytest.raises(TypeError):
+            self.reduce(0xDEADBEEF)  # type: ignore[arg-type]
+
 
 class TestCReduce(BaseTestReduce):
     reduce = reduce_c  # type: ignore[assignment]
