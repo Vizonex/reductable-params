@@ -186,8 +186,8 @@ static PyObject* reduce_call(
 
     result = PyObject_Call(r_wrapped, args, kwargs);
 cleanup:
-    Py_CLEAR(kwargs);
-    Py_CLEAR(args);
+    Py_XDECREF(kwargs);
+    Py_XDECREF(args);
     return result;
 }
 
