@@ -31,6 +31,9 @@ class Reducable(ABC, Generic[P, T]):
     @abstractmethod
     def __call__(self, /, kwds: dict[str, Any]) -> T: ...
 
+    @abstractmethod
+    def __hash__(self) -> int: ...
+
     @property
     @abstractmethod
     def args(self) -> tuple[str, ...]: ...
