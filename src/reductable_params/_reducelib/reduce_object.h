@@ -461,6 +461,11 @@ reduce_tp_call(
     );
 };
 
+static Py_hash_t
+reduce_tp_hash(ReduceObject* self){
+    return PyObject_Hash(self->wrapped);
+}
+
 
 static PyMethodDef reduce_methods[] = {
     {"install", 
@@ -516,6 +521,7 @@ static PyType_Slot reduce_slots[] = {
     {Py_tp_new, PyType_GenericNew},
     {Py_tp_free, PyObject_GC_Del},
     {Py_tp_members, reduce_members},
+    {Py_tp_hash, reduce_tp_hash},
     // {Py_tp_getset, reduce_getsetlist},
     {0, NULL},
 };

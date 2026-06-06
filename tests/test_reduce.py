@@ -166,6 +166,14 @@ class BaseTestReduce:
         with pytest.raises(TypeError):
             self.reduce(0xDEADBEEF)  # type: ignore[arg-type]
 
+    def test_hashing(self):
+        s: set[Reducable[..., Any]] = set()
+        func = self.make_test_1()
+        s.add(func)
+        assert func in s
+        s.remove(func)
+        assert func not in s
+
 
 class TestCReduce(BaseTestReduce):
     reduce = reduce_c  # type: ignore[assignment]

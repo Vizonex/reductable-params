@@ -131,5 +131,8 @@ class reduce(Generic[P, T]):
 
         return self.__wrapped__(*args, **kwargs)
 
+    def __hash__(self):
+        return hash(self.__wrapped__)
+
 
 Reducable.register(reduce)
