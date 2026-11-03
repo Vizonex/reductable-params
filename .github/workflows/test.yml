@@ -27,11 +27,11 @@ jobs:
           - os: windows-11-arm  # I don't know who decided it would be smart to screw this one up. :/
             python-version: '3.14t'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
     - name: Setup Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         check-latest: true
         python-version: ${{ matrix.python-version }}
