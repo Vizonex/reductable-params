@@ -1,7 +1,8 @@
 import inspect
 import sys
+from collections.abc import Callable
 from types import CodeType
-from typing import Any
+from typing import Any, cast
 
 _PYPY = hasattr(sys, "pypy_version_info")
 
@@ -39,7 +40,7 @@ def _varnames_from_existing_signature(signature: inspect.Signature):
 
 
 def _varnames_from_signature(
-    func: object,
+    func: Callable[..., Any],
 ) -> tuple[tuple[str, ...], dict[str, Any]]:
     """extracts from a function's given signature but is slightly slower"""
     return _varnames_from_existing_signature(inspect.signature(func))
@@ -86,7 +87,9 @@ def varnames(func: object):
                 )
             else:
                 # Fallback
-                args, kwargs = _varnames_from_signature(func)
+                args, kwargs = _varnames_from_signature(
+                    cast(Callable[..., Any], func)
+                )
         except TypeError:  # pragma: no cover
             return (), {}
 
