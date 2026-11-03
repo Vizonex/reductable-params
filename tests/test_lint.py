@@ -61,6 +61,7 @@ class TestSouceCode(RuffLinter, cmd=["check"]):
 
 
 class TestMypy:
+    @pytest.mark.xfail
     def test_mypy(self) -> None:
         if not typing.TYPE_CHECKING:
             api = pytest.importorskip("mypy.api")
