@@ -1,7 +1,7 @@
 import inspect
 import sys
 from types import CodeType
-from typing import Any, Protocol
+from typing import Any
 
 _PYPY = hasattr(sys, "pypy_version_info")
 
@@ -11,11 +11,6 @@ _PYPY = hasattr(sys, "pypy_version_info")
 
 _POSITONAL_ONLY = inspect.Parameter.POSITIONAL_ONLY
 _POSITONAL_OR_KW = inspect.Parameter.POSITIONAL_OR_KEYWORD
-
-
-class HasSignature(Protocol):
-    @property
-    def __signature__(self) -> inspect.Signature: ...
 
 
 def _varnames_from_code(
