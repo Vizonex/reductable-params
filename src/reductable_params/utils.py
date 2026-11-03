@@ -1,7 +1,8 @@
 import inspect
 import sys
+from collections.abc import Callable
 from types import CodeType
-from typing import Any
+from typing import Any, cast
 
 _PYPY = hasattr(sys, "pypy_version_info")
 
@@ -27,12 +28,8 @@ def _varnames_from_code(
         return args, {}
 
 
-def _varnames_from_signature(
-    func: object,
-) -> tuple[tuple[str, ...], dict[str, Any]]:
-    """extracts from a function's given signature but is slightly slower"""
-    sig = inspect.signature(func)  # type: ignore[arg-type]
-    parameters = sig.parameters
+def _varnames_from_existing_signature(signature: inspect.Signature):
+    parameters = signature.parameters
     required_args = [
         k for k, v in parameters.items() if v.kind == _POSITONAL_ONLY
     ]
@@ -40,6 +37,13 @@ def _varnames_from_signature(
         k: v for k, v in parameters.items() if v.kind == _POSITONAL_OR_KW
     }
     return tuple(required_args), optional
+
+
+def _varnames_from_signature(
+    func: Callable[..., Any],
+) -> tuple[tuple[str, ...], dict[str, Any]]:
+    """extracts from a function's given signature but is slightly slower"""
+    return _varnames_from_existing_signature(inspect.signature(func))
 
 
 def varnames(func: object):
@@ -50,33 +54,44 @@ def varnames(func: object):
     For methods the ``self`` parameter is not included.
 
     """
+    args = kwargs = None
     if inspect.isclass(func):
+        if hasattr(func, "__signature__"):
+            # likely reducing from a msgspec dataclass
+            args, kwargs = _varnames_from_existing_signature(
+                func.__signature__
+            )
         try:
             func = func.__init__
         except AttributeError:  # pragma: no cover - pypy special case
             return (), {}
+
     elif not inspect.isroutine(func):  # callable object?
         try:
             func = getattr(func, "__call__", func)
         except Exception:  # pragma: no cover - pypy special case
             return (), {}
 
-    try:
-        # func MUST be a function or method here or we won't parse any args.
-        func = func.__func__ if inspect.ismethod(func) else func
-        if hasattr(func, "__code__") and inspect.isroutine(func):
-            # Take the optimized approch rather than sit and parse the given
-            # signature.
-            args, kwargs = _varnames_from_code(
-                func
-                if not hasattr(func, "__wrapped__")
-                else inspect.unwrap(func)
-            )
-        else:
-            # Fallback
-            args, kwargs = _varnames_from_signature(func)
-    except TypeError:  # pragma: no cover
-        return (), {}
+    if args is None and kwargs is None:
+        try:
+            # func MUST be a function or method here or we won't parse
+            # any args.
+            func = func.__func__ if inspect.ismethod(func) else func
+            if hasattr(func, "__code__") and inspect.isroutine(func):
+                # Take the optimized approch rather than sit and parse
+                # the given signature.
+                args, kwargs = _varnames_from_code(
+                    func
+                    if not hasattr(func, "__wrapped__")
+                    else inspect.unwrap(func)
+                )
+            else:
+                # Fallback
+                args, kwargs = _varnames_from_signature(
+                    cast(Callable[..., Any], func)
+                )
+        except TypeError:  # pragma: no cover
+            return (), {}
 
     # strip any implicit instance arg
     # pypy3 uses "obj" instead of "self" for default dunder methods

@@ -16,24 +16,27 @@ from reductable_params import reduce
 def test(a: int, b: str | None = None):
     pass
 
+
 def child(a: int):
     print(f"GOT {a}")
+
 
 def what_is_b(b: str | None):
     print(f"B Is {b}")
 
+
 def main():
     func = reduce(test)
-    # defaults can be installed before possibly sending 
+    # defaults can be installed before possibly sending
     # these to a child function.
-    data = func.install(1) # {"a": 1, b: None}
-    
+    data = func.install(1)  # {"a": 1, b: None}
+
     child_func = reduce(child)
 
-    # Calling child_func will send itself off. 
+    # Calling child_func will send itself off.
     # You can customize the data after installing it too.
     # allowing for tons of creatives uses.
-    child_func(data) # B Parameter is ignored here.
+    child_func(data)  # B Parameter is ignored here.
     # "GOT 1"
 
     child_2 = reduce(what_is_b)
@@ -44,6 +47,23 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+msgspec is also supported if you need to manipulate from msgspec
+
+```python
+from msgspec import Struct
+from reductable_params import reduce
+
+
+class Object:
+    name: str
+    price: int = 999
+
+
+def main():
+    reduced_object = reduce(Object)
+```
+
 
 ## Benchmarks
 I decided to run benchmarks incase mainly to prove that this could be better than using `inspect.signature` alone and better for use on a mass scale when running the `install()` function.
