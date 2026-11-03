@@ -51,17 +51,17 @@ if __name__ == "__main__":
 msgspec is also supported if you need to manipulate from msgspec
 
 ```python
-
-from msgspec import Struct 
+from msgspec import Struct
 from reductable_params import reduce
+
 
 class Object:
     name: str
     price: int = 999
 
+
 def main():
     reduced_object = reduce(Object)
-
 ```
 
 

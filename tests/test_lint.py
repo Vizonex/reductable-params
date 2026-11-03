@@ -28,7 +28,7 @@ class RuffLinter:
                 "ruff", reason="No ruff linter avalible"
             )
         else:  # pragma: no branch
-            import ruff # type: ignore[import-untyped]
+            import ruff  # type: ignore[import-untyped]
         return ruff.find_ruff_bin()
 
     def run_cmd(self) -> None:
